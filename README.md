@@ -1,15 +1,15 @@
-#StudyTrack
+# StudyTrack
 
 StudyTrack is a personal study planner web application
 
-##Technologies
+## Technologies
 - HTML
 - CSS
 - JavaScript
 - PHP 
 - MySQL
 
-###Main Features
+### Main Features
 - User Registration and Login
 - Subject Management
 - Study Task Management
