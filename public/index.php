@@ -81,6 +81,16 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <p><strong>Subject:</strong> <?= htmlspecialchars($task['subject_name']) ?></p>
                         <p><strong>Due date:</strong> <?= htmlspecialchars($task['due_date'] ?? 'Not set') ?></p>
                         <p class="task-status"><?= htmlspecialchars($task['status']) ?></p>
+
+                        <a href="edit-task.php?id=<?= (int) $task['id'] ?>" class="edit-button">
+                            Edit Task
+                        </a>
+
+                        <form action="delete-task.php" method="POST"
+                                onsubmit="return confirm('Are you sure you want to delete this task?');">
+                            <input type="hidden" name="id" value="<?= (int) $task['id'] ?>">
+                            <button type="submit" class="delete-button">Delete Task</button>
+                        </form>
                     </div>
                 <?php endforeach; ?>
             </div>
