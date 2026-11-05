@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
+$statusFilter = $_GET['status'] ?? 'all';
+
 $sql = "SELECT
             tasks.id,
             tasks.title,
@@ -9,15 +11,36 @@ $sql = "SELECT
             tasks.status,
             subjects.name AS subject_name
         FROM tasks
-        JOIN subjects ON tasks.subject_id = subjects.id
-        ORDER BY tasks.due_date ASC";
+        JOIN subjects ON tasks.subject_id = subjects.id";
+
+if ($statusFilter === 'pending' || $statusFilter === 'completed') {
+    $sql .= " WHERE tasks.status = :status";
+}
+
+$sql .= " ORDER BY tasks.due_date ASC";
+
+$stmt = $pdo->prepare($sql);
+
+if ($statusFilter === 'pending' || $statusFilter === 'completed') {
+    $stmt->execute(['status' => $statusFilter]);
+} else {
+    $stmt->execute();
+}
+
+$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $subjectSql = "SELECT id, name FROM subjects ORDER BY name ASC";
 $subjectStmt = $pdo->query($subjectSql);
 $subjects = $subjectStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmt = $pdo->query($sql);
-$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$countSql = "SELECT
+                COUNT(*) AS total,
+                SUM(status = 'pending') AS pending,
+                SUM(status = 'completed') AS completed
+             FROM tasks";
+
+$countStmt = $pdo->query($countSql);
+$taskCounts = $countStmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -33,6 +56,23 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h1>Welcome to StudyTrack</h1>
         <p>Your personal study planner.</p>
     </header>
+
+    <section class="task-summary">
+        <div class="summary-card">
+            <h3>Total Tasks</h3>
+            <p><?= (int) $taskCounts['total'] ?></p>
+        </div>
+
+        <div class="summary-card">
+            <h3>Pending</h3>
+            <p><?= (int) $taskCounts['pending'] ?></p>
+        </div>
+
+        <div class="summary-card">
+            <h3>Completed</h3>
+            <p><?= (int) $taskCounts['completed'] ?></p>
+        </div>
+    </section>
 
     <main>
 
@@ -63,6 +103,22 @@ $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </form>
         </section>
         
+        <form action="index.php" method="GET" class="filter-form">
+            <label for="status">Filter tasks:</label>
+
+            <select name="status" id="status" onchange="this.form.submit()">
+                <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>
+                    All tasks
+                </option>
+                <option value="pending" <?= $statusFilter === 'pending' ? 'selected' : '' ?>>
+                    Pending
+                </option>
+                <option value="completed" <?= $statusFilter === 'completed' ? 'selected' : '' ?>>
+                    Completed
+                </option>
+            </select>
+        </form>
+
         <h2>My Tasks</h2>
 
         <h2>Available Subjects</h2>
